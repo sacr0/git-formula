@@ -41,20 +41,27 @@ git_repo_{{ repo }}:
     {%- endif %}
     - require:
       - file: git_directory_{{ repo }}
+      - pkg: git
     {%- for require_name, require_setting in setting.get('require', {}).iteritems() %}
-      require_setting.get("type"): require_setting.get("name")
+      - {{ require_setting.get("type") }}: '{{ require_setting.get("name") }}'
     {% endfor %}
+    {%- if setting.get('require_in') %}
+    - require_in:
+    {%- for requirein_name, requirein_setting in setting.get('require_in', {}).iteritems() %}
+      - {{ requirein_setting.get("type") }}: '{{ requirein_setting.get("name") }}'
+    {% endfor %}
+    {%- endif %}
     {%- if setting.get('watch_in') %}
     - watch_in:
     {%- for watchin_name, watchin_setting in setting.get('watch_in', {}).iteritems() %}
-      watchin_setting.get("type"): watchin_setting.get("name")
+      - {{ watchin_setting.get("type") }}: '{{ watchin_setting.get("name") }}'
     {% endfor %}
     {%- endif %}
 
 {%- if setting.get('auto-update') %} 
 git_repo_{{ repo }}_cronjob:
   cron.present:
-    - name: "git -C {{ setting.get("target_folder") }} pull"
+    - name: "ssh-agent sh -c 'ssh-add {{ setting.get("identity") }}; git -C {{ setting.get("target_folder") }} pull'"
     - identifier: "git repo - auto update: {{ repo }}"
     {%- for variable, value in setting.get('auto-update',{}).iteritems() %}
     - {{variable}}: '{{value}}'
